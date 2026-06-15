@@ -208,12 +208,13 @@ else:
                 else:
                     st.info("No data available")
             
-            # Daily spending trend
+            # Daily spending trend - FIXED
             if not df.empty:
-                df['date_only'] = pd.to_datetime(df['date']).dt.date
-                daily = df.groupby('date_only')['amount'].sum().reset_index()
+                df['date_str'] = pd.to_datetime(df['date']).dt.strftime('%Y-%m-%d')
+                daily = df.groupby('date_str')['amount'].sum().reset_index()
                 daily.columns = ['date', 'amount']
                 fig3 = px.line(daily, x='date', y='amount', title='Daily Spending Trend', markers=True)
+                fig3.update_xaxes(type='category')
                 st.plotly_chart(fig3, use_container_width=True)
             else:
                 st.info("No data available")

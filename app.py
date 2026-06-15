@@ -129,14 +129,26 @@ else:
         else:
             year = None
     
-    # Query transactions
+  
+        # Query transactions
     query = db.query(Transaction).filter(Transaction.user_id == st.session_state.user_id)
 
     if period == "Monthly" and month:
-        query = query.filter(extract('year', Transaction.date) == 2026)
-        query = query.filter(extract('month', Transaction.date) == month)
+        # Filter menggunakan string date
+        year = 2026
+        start_date = f"{year}-{month:02d}-01"
+        if month == 12:
+            end_date = f"{year+1}-01-01"
+        else:
+            end_date = f"{year}-{month+1:02d}-01"
+        query = query.filter(Transaction.date >= start_date)
+        query = query.filter(Transaction.date < end_date)
+        
     elif period == "Yearly" and year:
-        query = query.filter(extract('year', Transaction.date) == year)
+        start_date = f"{year}-01-01"
+        end_date = f"{year+1}-01-01"
+        query = query.filter(Transaction.date >= start_date)
+        query = query.filter(Transaction.date < end_date)
     
     transactions = query.order_by(Transaction.date.desc()).all()
     

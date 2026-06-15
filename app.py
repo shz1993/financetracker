@@ -130,25 +130,31 @@ else:
             year = None
     
   
-        # Query transactions
+          # Query transactions
     query = db.query(Transaction).filter(Transaction.user_id == st.session_state.user_id)
 
-    if period == "Monthly" and month:
-        # Filter menggunakan string date
-        year = 2026
-        start_date = f"{year}-{month:02d}-01"
-        if month == 12:
+    if period == "Monthly":
+        # Monthly filter - hardcode 2026 karena data Anda di tahun itu
+        if month:
+            start_date = f"2026-{month:02d}-01"
+            if month == 12:
+                end_date = "2027-01-01"
+            else:
+                end_date = f"2026-{month+1:02d}-01"
+            query = query.filter(Transaction.date >= start_date)
+            query = query.filter(Transaction.date < end_date)
+            st.success(f"Menampilkan data bulan {month}/2026")  # debug
+            
+    elif period == "Yearly":
+        # Yearly filter
+        if year:
+            start_date = f"{year}-01-01"
             end_date = f"{year+1}-01-01"
-        else:
-            end_date = f"{year}-{month+1:02d}-01"
-        query = query.filter(Transaction.date >= start_date)
-        query = query.filter(Transaction.date < end_date)
-        
-    elif period == "Yearly" and year:
-        start_date = f"{year}-01-01"
-        end_date = f"{year+1}-01-01"
-        query = query.filter(Transaction.date >= start_date)
-        query = query.filter(Transaction.date < end_date)
+            query = query.filter(Transaction.date >= start_date)
+            query = query.filter(Transaction.date < end_date)
+            st.success(f"Menampilkan data tahun {year}")  # debug
+    
+    # All Time - no filter needed
     
     transactions = query.order_by(Transaction.date.desc()).all()
     

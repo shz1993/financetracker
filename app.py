@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
+from sqlalchemy import extract
 
 from utils.database import init_db, get_db, User, Category, Transaction, engine
 from utils.auth import register_user, login_user, get_current_user
@@ -130,13 +131,12 @@ else:
     
     # Query transactions
     query = db.query(Transaction).filter(Transaction.user_id == st.session_state.user_id)
-    
+
     if period == "Monthly" and month:
-        query = query.filter(Transaction.date >= f"2026-{month:02d}-01")
-        query = query.filter(Transaction.date < f"2026-{month+1:02d}-01" if month < 12 else "2027-01-01")
+        query = query.filter(extract('year', Transaction.date) == 2026)
+        query = query.filter(extract('month', Transaction.date) == month)
     elif period == "Yearly" and year:
-        query = query.filter(Transaction.date >= f"{year}-01-01")
-        query = query.filter(Transaction.date < f"{year+1}-01-01")
+        query = query.filter(extract('year', Transaction.date) == year)
     
     transactions = query.order_by(Transaction.date.desc()).all()
     
@@ -188,7 +188,7 @@ else:
                     st.info("No expense data")
             
             with col2:
-                # Income vs Expense bar chart (SUDAH DI FIX)
+                # Income vs Expense bar chart
                 if not df.empty:
                     df['date'] = pd.to_datetime(df['date'])
                     monthly = df.groupby([df['date'].dt.strftime('%Y-%m'), 'type'])['amount'].sum().reset_index()

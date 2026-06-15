@@ -208,8 +208,8 @@ else:
                 else:
                     st.info("No data available")
             
-                        if not df.empty:
-                # Pastikan date dalam format date (tanpa waktu)
+            # Daily spending trend
+            if not df.empty:
                 df['date_only'] = pd.to_datetime(df['date']).dt.date
                 daily = df.groupby('date_only')['amount'].sum().reset_index()
                 daily.columns = ['date', 'amount']

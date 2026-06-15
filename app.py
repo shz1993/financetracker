@@ -153,6 +153,10 @@ else:
             query = query.filter(Transaction.date >= start_date)
             query = query.filter(Transaction.date < end_date)
             st.success(f"Menampilkan data tahun {year}")  # debug
+            
+            from sqlalchemy.dialects import postgresql
+     compiled = query.statement.compile(dialect=postgresql.dialect())
+    st.code(str(compiled), language="sql")
     
     # All Time - no filter needed
     

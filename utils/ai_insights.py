@@ -1,5 +1,4 @@
 import os
-from groq import Groq
 import streamlit as st
 import pandas as pd
 
@@ -30,50 +29,25 @@ def get_ai_insights(transactions_df, period="monthly"):
     else:
         avg_daily = 0
     
-    # Create prompt for Groq
-    prompt = f"""
-    You are a personal finance advisor. Analyze this user's spending and provide insights.
+    # Return tips without API call (temporary fix)
+    tips = f"""
+    Based on your spending data:
 
-    DATA SUMMARY:
-    - Period: {period}
-    - Total Income: Rp{total_income:,.0f}
-    - Total Expenses: Rp{total_expense:,.0f}
-    - Savings: Rp{savings:,.0f}
-    - Saving Rate: {saving_rate:.1f}%
-    - Average Daily Spending: Rp{avg_daily:,.0f}
-    - Top Spending Categories: {top_cats_str}
+    **Summary:**  
+    - Income: Rp{total_income:,.0f}  
+    - Expenses: Rp{total_expense:,.0f}  
+    - Savings rate: {saving_rate:.0f}%
 
-    TASK:
-    Provide 3 personalized saving tips based on their spending pattern.
-    Make the tips specific, actionable, and friendly.
+    **Top spending categories:** {top_cats_str}
 
-    Format your response as:
-    1. [Tip 1]
-    2. [Tip 2]
-    3. [Tip 3]
+    **Personalized Tips:**  
+    1. 🎯 **Track every expense** - Continue logging all transactions to identify patterns  
+    2. 💰 **Aim for 20% savings** - Your current savings rate is {saving_rate:.0f}%  
+    3. 📊 **Review subscriptions** - Check for unused monthly subscriptions  
+    4. 📅 **Set daily budget** - Average daily spend is Rp{avg_daily:,.0f}  
+    5. 🏦 **Emergency fund** - Aim for 3-6 months of expenses saved
+
+    *Note: AI insights temporarily unavailable. Using rule-based tips.*
     """
     
-    try:
-        # Get API key from secrets
-        api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
-        
-        if not api_key:
-            return "⚠️ GROQ_API_KEY not configured. Please add it to your secrets.\n\n**Quick Tips:**\n1. Track every expense\n2. Aim for 20% savings rate\n3. Review subscriptions monthly"
-        
-        # Initialize Groq client WITHOUT proxy parameter
-        client = Groq(api_key=api_key)
-        
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[
-                {"role": "system", "content": "You are a friendly, helpful personal finance advisor. Be concise and practical."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500,
-        )
-        insights = response.choices[0].message.content.strip()
-        return insights
-    except Exception as e:
-        error_msg = str(e)
-        return f"⚠️ AI insights temporarily unavailable: {error_msg[:100]}\n\n**Quick Tips:**\n1. Track every expense\n2. Aim for 20% savings rate\n3. Review subscriptions monthly"
+    return tips

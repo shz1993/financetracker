@@ -188,15 +188,22 @@ else:
                     st.info("No expense data")
             
             with col2:
-                # Income vs Expense bar chart
-                monthly = df.groupby([df['date'].dt.strftime('%Y-%m'), 'type'])['amount'].sum().reset_index()
-                fig2 = px.bar(monthly, x='date', y='amount', color='type', barmode='group', title='Monthly Overview')
-                st.plotly_chart(fig2, use_container_width=True)
+                # Income vs Expense bar chart (SUDAH DI FIX)
+                if not df.empty:
+                    df['date'] = pd.to_datetime(df['date'])
+                    monthly = df.groupby([df['date'].dt.strftime('%Y-%m'), 'type'])['amount'].sum().reset_index()
+                    fig2 = px.bar(monthly, x='date', y='amount', color='type', barmode='group', title='Monthly Overview')
+                    st.plotly_chart(fig2, use_container_width=True)
+                else:
+                    st.info("No data available")
             
             # Daily spending trend
-            daily = df.groupby('date')['amount'].sum().reset_index()
-            fig3 = px.line(daily, x='date', y='amount', title='Daily Spending Trend')
-            st.plotly_chart(fig3, use_container_width=True)
+            if not df.empty:
+                daily = df.groupby('date')['amount'].sum().reset_index()
+                fig3 = px.line(daily, x='date', y='amount', title='Daily Spending Trend')
+                st.plotly_chart(fig3, use_container_width=True)
+            else:
+                st.info("No data available")
         
         with tab2:
             st.subheader("🤖 AI Financial Insights")

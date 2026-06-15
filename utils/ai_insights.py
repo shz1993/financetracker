@@ -3,7 +3,7 @@ import streamlit as st
 import pandas as pd
 
 def get_ai_insights(transactions_df, period="monthly"):
-    """Get AI insights from transaction data using Groq"""
+    """Get AI insights from transaction data"""
     
     if transactions_df.empty:
         return "Add some transactions to get AI insights!"
@@ -18,7 +18,8 @@ def get_ai_insights(transactions_df, period="monthly"):
     expense_df = transactions_df[transactions_df['type'] == 'expense']
     if not expense_df.empty:
         top_categories = expense_df.groupby('category_name')['amount'].sum().sort_values(ascending=False).head(3)
-        top_cats_str = ", ".join([f"{cat}: Rp{amount:,.0f}" for cat, amount in top_categories.items()])
+        # Format dengan pemisah ribuan yang benar
+        top_cats_str = ", ".join([f"{cat}: Rp{amount:,.0f}".replace(',', '.') for cat, amount in top_categories.items()])
     else:
         top_cats_str = "No expenses recorded"
     
@@ -29,25 +30,32 @@ def get_ai_insights(transactions_df, period="monthly"):
     else:
         avg_daily = 0
     
-    # Return tips without API call (temporary fix)
+    # Format currency dengan pemisah titik
+    income_str = f"Rp{total_income:,.0f}".replace(',', '.')
+    expense_str = f"Rp{total_expense:,.0f}".replace(',', '.')
+    avg_daily_str = f"Rp{avg_daily:,.0f}".replace(',', '.')
+    
+    # Return tips with proper formatting
     tips = f"""
-    Based on your spending data:
+Based on your spending data:
 
-    **Summary:**  
-    - Income: Rp{total_income:,.0f}  
-    - Expenses: Rp{total_expense:,.0f}  
-    - Savings rate: {saving_rate:.0f}%
+📊 SUMMARY:
+• Income: {income_str}
+• Expenses: {expense_str}
+• Savings Rate: {saving_rate:.0f}%
 
-    **Top spending categories:** {top_cats_str}
+📈 TOP SPENDING CATEGORIES:
+{top_cats_str}
 
-    **Personalized Tips:**  
-    1. 🎯 **Track every expense** - Continue logging all transactions to identify patterns  
-    2. 💰 **Aim for 20% savings** - Your current savings rate is {saving_rate:.0f}%  
-    3. 📊 **Review subscriptions** - Check for unused monthly subscriptions  
-    4. 📅 **Set daily budget** - Average daily spend is Rp{avg_daily:,.0f}  
-    5. 🏦 **Emergency fund** - Aim for 3-6 months of expenses saved
+💡 PERSONALIZED TIPS:
+1. Track every expense - Continue logging all transactions to identify patterns
+2. Aim for 20% savings - Your current savings rate is {saving_rate:.0f}%
+3. Review subscriptions - Check for unused monthly subscriptions
+4. Set daily budget - Average daily spend is {avg_daily_str}
+5. Emergency fund - Aim for 3-6 months of expenses saved
 
-    *Note: AI insights temporarily unavailable. Using rule-based tips.*
+---
+Note: Using rule-based financial tips.
     """
     
     return tips

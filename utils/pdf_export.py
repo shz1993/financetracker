@@ -70,7 +70,11 @@ def generate_pdf(summary_data, transactions_df, insights):
     pdf.set_font('Arial', '', 9)
     pdf.set_fill_color(255, 255, 255)
     count = 0
-    for _, row in transactions_df.iterrows():
+    
+    # Urutkan dari tanggal LAMA ke BARU (ascending)
+    transactions_df_sorted = transactions_df.sort_values(by='date', ascending=True)
+    
+    for _, row in transactions_df_sorted.iterrows():
         if count >= 20:
             break
         try:
@@ -88,10 +92,9 @@ def generate_pdf(summary_data, transactions_df, insights):
         except Exception:
             continue
     
-    # Save to bytes using buffer
+    # Save to bytes
     pdf_buffer = pdf.output(dest='S')
     
-    # Ensure it's bytes
     if isinstance(pdf_buffer, str):
         pdf_buffer = pdf_buffer.encode('latin1')
     elif isinstance(pdf_buffer, bytearray):

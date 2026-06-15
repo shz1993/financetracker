@@ -20,21 +20,18 @@ class PDFReport(FPDF):
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
 def clean_text(text):
-    """Clean text for PDF"""
     if not text:
         return ""
     text = str(text)
-    # Remove emojis
     text = re.sub(r'[^\x00-\x7F]+', '', text)
     return text.strip()
 
 def generate_pdf(summary_data, transactions_df, insights):
-    """Generate PDF report"""
     pdf = PDFReport()
     pdf.add_page()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Summary Section
+    # Summary
     pdf.set_font('Arial', 'B', 12)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 8, 'FINANCIAL SUMMARY', 0, 1)
@@ -56,7 +53,7 @@ def generate_pdf(summary_data, transactions_df, insights):
     
     pdf.ln(5)
     
-    # Transactions
+    # Transactions Table
     pdf.set_font('Arial', 'B', 12)
     pdf.cell(0, 8, 'RECENT TRANSACTIONS', 0, 1)
     pdf.set_font('Arial', 'B', 9)
@@ -90,4 +87,5 @@ def generate_pdf(summary_data, transactions_df, insights):
         except Exception:
             continue
     
-    return pdf.output(dest='S')
+    # Return as bytes (CRITICAL FIX)
+    return pdf.output(dest='S').encode('latin1')

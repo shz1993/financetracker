@@ -6,6 +6,9 @@ import pandas as pd
 def get_ai_insights(transactions_df, period="monthly"):
     """Get AI insights from transaction data using Groq"""
     
+    if transactions_df.empty:
+        return "Add some transactions to get AI insights!"
+    
     # Prepare summary stats
     total_income = transactions_df[transactions_df['type'] == 'income']['amount'].sum()
     total_expense = transactions_df[transactions_df['type'] == 'expense']['amount'].sum()
@@ -21,11 +24,11 @@ def get_ai_insights(transactions_df, period="monthly"):
         top_cats_str = "No expenses recorded"
     
     # Get daily average spending
-    days = transactions_df['date'].nunique() if not transactions_df.empty else 1
-    avg_daily = total_expense / days if days > 0 else 0
-    
-    # Sample transactions for context
-    recent = transactions_df.head(5).to_dict('records') if not transactions_df.empty else []
+    if not transactions_df.empty:
+        days = transactions_df['date'].nunique()
+        avg_daily = total_expense / days if days > 0 else 0
+    else:
+        avg_daily = 0
     
     # Create prompt for Groq
     prompt = f"""
@@ -51,10 +54,15 @@ def get_ai_insights(transactions_df, period="monthly"):
     """
     
     try:
-        client = Groq(
-    api_key=st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY")),
-    proxy=None  # Menonaktifkan proxy
-)
+        # Get API key from secrets
+        api_key = st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY"))
+        
+        if not api_key:
+            return "⚠️ GROQ_API_KEY not configured. Please add it to your secrets.\n\n**Quick Tips:**\n1. Track every expense\n2. Aim for 20% savings rate\n3. Review subscriptions monthly"
+        
+        # Initialize Groq client WITHOUT proxy parameter
+        client = Groq(api_key=api_key)
+        
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[
@@ -67,8 +75,5 @@ def get_ai_insights(transactions_df, period="monthly"):
         insights = response.choices[0].message.content.strip()
         return insights
     except Exception as e:
-        return f"⚠️ AI insights temporarily unavailable: {str(e)}\n\n**Quick Tips:**\n1. Track every expense\n2. Aim for 20% savings rate\n3. Review subscriptions monthly"
-
-def suggest_budget(tips):
-    """Convert AI tips to budget suggestions"""
-    return tips
+        error_msg = str(e)
+        return f"⚠️ AI insights temporarily unavailable: {error_msg[:100]}\n\n**Quick Tips:**\n1. Track every expense\n2. Aim for 20% savings rate\n3. Review subscriptions monthly"

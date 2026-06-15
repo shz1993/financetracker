@@ -51,7 +51,10 @@ def get_ai_insights(transactions_df, period="monthly"):
     """
     
     try:
-        client = Groq(api_key=st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY")))
+        client = Groq(
+    api_key=st.secrets.get("GROQ_API_KEY", os.getenv("GROQ_API_KEY")),
+    proxy=None  # Menonaktifkan proxy
+)
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=[

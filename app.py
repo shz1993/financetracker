@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import datetime, timedelta
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
 
@@ -129,12 +129,10 @@ else:
         else:
             year = None
     
-  
-          # Query transactions
+    # Query transactions
     query = db.query(Transaction).filter(Transaction.user_id == st.session_state.user_id)
 
     if period == "Monthly":
-        # Monthly filter - hardcode 2026 karena data Anda di tahun itu
         if month:
             start_date = f"2026-{month:02d}-01"
             if month == 12:
@@ -143,22 +141,15 @@ else:
                 end_date = f"2026-{month+1:02d}-01"
             query = query.filter(Transaction.date >= start_date)
             query = query.filter(Transaction.date < end_date)
-            st.success(f"Menampilkan data bulan {month}/2026")  # debug
+            st.success(f"Menampilkan data bulan {month}/2026")
             
     elif period == "Yearly":
-        # Yearly filter
         if year:
             start_date = f"{year}-01-01"
             end_date = f"{year+1}-01-01"
             query = query.filter(Transaction.date >= start_date)
             query = query.filter(Transaction.date < end_date)
-            st.success(f"Menampilkan data tahun {year}")  # debug
-            
-            from sqlalchemy.dialects import postgresql
-     compiled = query.statement.compile(dialect=postgresql.dialect())
-    st.code(str(compiled), language="sql")
-    
-    # All Time - no filter needed
+            st.success(f"Menampilkan data tahun {year}")
     
     transactions = query.order_by(Transaction.date.desc()).all()
     
@@ -200,7 +191,6 @@ else:
             col1, col2 = st.columns(2)
             
             with col1:
-                # Expense by category pie chart
                 expense_df = df[df['type'] == 'expense']
                 if not expense_df.empty:
                     cat_expense = expense_df.groupby('category_name')['amount'].sum().reset_index()
@@ -210,7 +200,6 @@ else:
                     st.info("No expense data")
             
             with col2:
-                # Income vs Expense bar chart
                 if not df.empty:
                     df['date'] = pd.to_datetime(df['date'])
                     monthly = df.groupby([df['date'].dt.strftime('%Y-%m'), 'type'])['amount'].sum().reset_index()
@@ -219,7 +208,6 @@ else:
                 else:
                     st.info("No data available")
             
-            # Daily spending trend
             if not df.empty:
                 daily = df.groupby('date')['amount'].sum().reset_index()
                 fig3 = px.line(daily, x='date', y='amount', title='Daily Spending Trend')
@@ -232,26 +220,20 @@ else:
             with st.spinner("Analyzing your spending..."):
                 insights = get_ai_insights(df, period)
                 st.markdown(insights)
-            
             st.divider()
             st.caption("💡 AI uses Groq Llama 3 (free) to analyze your spending patterns")
         
         with tab3:
-            # Transaction table with delete option
             st.subheader("Transaction History")
-            
-            # Search and filter
             search = st.text_input("🔍 Search transactions", placeholder="Type description or category...")
             filtered_df = df
             if search:
                 filtered_df = df[df['description'].str.contains(search, case=False) | df['category_name'].str.contains(search, case=False)]
             
-            # Display table
             display_df = filtered_df[['date', 'category_name', 'description', 'amount', 'type']].copy()
             display_df['amount'] = display_df['amount'].apply(lambda x: f"Rp{x:,.0f}")
             st.dataframe(display_df, use_container_width=True)
             
-            # Delete transaction
             with st.expander("🗑️ Delete Transaction"):
                 txn_id = st.number_input("Transaction ID to delete", min_value=0, step=1)
                 if st.button("Delete"):

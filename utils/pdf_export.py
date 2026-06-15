@@ -21,15 +21,16 @@ def clean_text(text):
     if not text:
         return ""
     text = str(text)
-    # Remove emojis and special chars
+    # Remove emojis and keep only basic characters
     text = re.sub(r'[^\x00-\x7F]+', '', text)
     text = text.replace('_', ' ')
-    return text[:200]  # Limit length
+    return text[:200]
 
 def generate_pdf(summary_data, transactions_df, insights):
-    """Generate PDF report"""
+    """Generate PDF report and return bytes"""
     pdf = PDFReport()
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
     
     # Summary
     pdf.set_font('Arial', 'B', 14)
@@ -46,8 +47,8 @@ def generate_pdf(summary_data, transactions_df, insights):
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, 'AI Insights & Tips', 0, 1)
     pdf.set_font('Arial', '', 11)
-    cleaned = clean_text(str(insights))
-    pdf.multi_cell(0, 6, cleaned)
+    cleaned_insights = clean_text(str(insights))
+    pdf.multi_cell(0, 6, cleaned_insights)
     
     pdf.ln(10)
     
@@ -83,5 +84,5 @@ def generate_pdf(summary_data, transactions_df, insights):
         except Exception:
             continue
     
-    # Return PDF bytes
-    return pdf.output(dest='S')
+    # Return as bytes (proper format for Streamlit)
+    return bytes(pdf.output(dest='S'))

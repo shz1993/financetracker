@@ -2,6 +2,7 @@ from fpdf import FPDF
 import pandas as pd
 from datetime import datetime
 import re
+import io
 
 class PDFReport(FPDF):
     def header(self):
@@ -87,5 +88,13 @@ def generate_pdf(summary_data, transactions_df, insights):
         except Exception:
             continue
     
-    # Return as bytes (CRITICAL FIX)
-    return pdf.output(dest='S').encode('latin1')
+    # Save to bytes using buffer
+    pdf_buffer = pdf.output(dest='S')
+    
+    # Ensure it's bytes
+    if isinstance(pdf_buffer, str):
+        pdf_buffer = pdf_buffer.encode('latin1')
+    elif isinstance(pdf_buffer, bytearray):
+        pdf_buffer = bytes(pdf_buffer)
+    
+    return pdf_buffer

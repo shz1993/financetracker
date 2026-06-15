@@ -17,32 +17,21 @@ class PDFReport(FPDF):
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
 def clean_text(text):
-    """Remove special characters that cause PDF errors"""
+    """Remove special characters"""
     if not text:
         return ""
-    # Replace problematic characters
-    text = text.replace('💰', '[Money]')
-    text = text.replace('💸', '[Expense]')
-    text = text.replace('💎', '[Balance]')
-    text = text.replace('🤖', '[AI]')
-    text = text.replace('📊', '[Chart]')
-    text = text.replace('📋', '[List]')
-    text = text.replace('✅', '[OK]')
-    text = text.replace('❌', '[X]')
-    text = text.replace('⭐', '[Star]')
-    text = text.replace('•', '-')
-    text = text.replace('→', '->')
-    text = text.replace('…', '...')
-    # Keep only ASCII characters
+    text = str(text)
+    # Remove emojis and special chars
     text = re.sub(r'[^\x00-\x7F]+', '', text)
-    return text
+    text = text.replace('_', ' ')
+    return text[:200]  # Limit length
 
 def generate_pdf(summary_data, transactions_df, insights):
     """Generate PDF report"""
     pdf = PDFReport()
     pdf.add_page()
     
-    # Summary Section
+    # Summary
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, 'Financial Summary', 0, 1)
     pdf.set_font('Arial', '', 12)
@@ -53,16 +42,16 @@ def generate_pdf(summary_data, transactions_df, insights):
     
     pdf.ln(10)
     
-    # AI Insights (cleaned)
+    # AI Insights
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, 'AI Insights & Tips', 0, 1)
     pdf.set_font('Arial', '', 11)
-    cleaned_insights = clean_text(str(insights))
-    pdf.multi_cell(0, 6, cleaned_insights)
+    cleaned = clean_text(str(insights))
+    pdf.multi_cell(0, 6, cleaned)
     
     pdf.ln(10)
     
-    # Transactions Table
+    # Transactions
     pdf.set_font('Arial', 'B', 14)
     pdf.cell(0, 10, 'Recent Transactions', 0, 1)
     pdf.set_font('Arial', 'B', 9)
@@ -75,16 +64,24 @@ def generate_pdf(summary_data, transactions_df, insights):
     pdf.ln()
     
     pdf.set_font('Arial', '', 9)
-    for _, row in transactions_df.head(20).iterrows():
-        date_str = str(row['date'])[:10] if row['date'] else '-'
-        cat_str = clean_text(str(row['category_name']))[:20]
-        desc_str = clean_text(str(row['description']))[:30] if row['description'] else '-'
-        amount_str = f"Rp{row['amount']:,.0f}"
-        
-        pdf.cell(35, 7, date_str, 1, 0, 'L')
-        pdf.cell(45, 7, cat_str, 1, 0, 'L')
-        pdf.cell(55, 7, desc_str, 1, 0, 'L')
-        pdf.cell(35, 7, amount_str, 1, 0, 'R')
-        pdf.ln()
+    count = 0
+    for _, row in transactions_df.iterrows():
+        if count >= 20:
+            break
+        try:
+            date_str = str(row['date'])[:10] if pd.notna(row['date']) else '-'
+            cat_str = clean_text(str(row['category_name']))[:20]
+            desc_str = clean_text(str(row['description']))[:25] if pd.notna(row['description']) else '-'
+            amount_str = f"Rp{row['amount']:,.0f}"
+            
+            pdf.cell(35, 7, date_str, 1, 0, 'L')
+            pdf.cell(45, 7, cat_str, 1, 0, 'L')
+            pdf.cell(55, 7, desc_str, 1, 0, 'L')
+            pdf.cell(35, 7, amount_str, 1, 0, 'R')
+            pdf.ln()
+            count += 1
+        except Exception:
+            continue
     
-    return pdf.output(dest='S').encode('latin1')
+    # Return PDF bytes
+    return pdf.output(dest='S')
